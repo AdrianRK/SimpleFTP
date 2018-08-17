@@ -51,8 +51,6 @@ ThreadPool<Job>::ThreadPool(): mQuit(false)
 	{
 		while (!this->mQuit)
 		{
-			bool DoStuff = false;
-			
 			std::unique_lock <std::mutex> lk(mMtx);
 			mSignal.wait(lk, [&] {return (!this->mQueue.empty()) || (this->mQuit);});
 			if (this->mQuit)
@@ -61,7 +59,6 @@ ThreadPool<Job>::ThreadPool(): mQuit(false)
 			}
 			Job local = this->mQueue.front();
 			this->mQueue.pop();
-			DoStuff = true;
 					
 			lk.unlock();
 			local();	

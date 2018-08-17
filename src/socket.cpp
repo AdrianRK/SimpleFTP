@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "socket.hpp"
-#include "../logging/logging.hpp"
+#include "../inc/socket.hpp"
+#include "../inc/logging.hpp"
 
 Socket::Socket(Socket&&s): fdsocket(s.fdsocket), mType(s.mType), servinfo(s.servinfo)
 {
@@ -45,6 +45,7 @@ Socket Socket::operator = (Socket &&s)
 	std::swap(fdsocket, s.fdsocket);
 	std::swap(servinfo, s.servinfo);
 	mType = s.mType;
+	return std::move(*this);
 }
 
 void Socket::fdclose()
@@ -72,13 +73,13 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 		printLog("Incorrect arguments");
 		return 0;	
 	}
-	size_t ret = send(fdsocket, reinterpret_cast<const void*>(buffer), size, 0);
+	int ret = send(fdsocket, reinterpret_cast<const void*>(buffer), size, 0);
 	if (ret == -1)
 	{
 		printLog("Error sending");
 		return 0;
 	}
-	if (ret != size)
+	if (ret != int(size))
 	{
 		printLog("Did not send everyhting ", size, " ", ret);
 	}
@@ -92,7 +93,7 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 		printLog("Incorrect arguments");
 		return 0;	
 	}
-	size_t ret = recv(fdsocket, reinterpret_cast<void*>(buffer), max_length, 0);
+	int ret = recv(fdsocket, reinterpret_cast<void*>(buffer), max_length, 0);
 	if (ret == -1)
 	{
 		printLog("Error sending");
@@ -123,7 +124,6 @@ Socket::Socket(const std::string &ip, const std::string &port):fdsocket(-1)
 
 	int status;
 	struct addrinfo hints;
-	struct addrinfo *p;
 
 	memset(&hints, 0, sizeof hints); // make sure the struct is empty
 	hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
@@ -152,6 +152,7 @@ Socket Socket::operator = (const int&s)
 	fdclose();
 	fdsocket = s;
 	mType = CLIENT;
+	return std::move(*this);
 }
 
 std::ostream & operator << (std::ostream &st, const Socket &s)

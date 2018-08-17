@@ -16,9 +16,9 @@
  * =====================================================================================
  */
 
-#include "../ThreadPool/threadpool.hpp"
-#include "../logging/logging.hpp"
-#include "socket.hpp"
+#include "../inc/threadpool.hpp"
+#include "../inc/logging.hpp"
+#include "../inc/socket.hpp"
 #include <fstream>
 
 

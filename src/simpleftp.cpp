@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "simpleftp.hpp"
-#include "../logging/logging.hpp"
+#include "../inc/simpleftp.hpp"
+#include "../inc/logging.hpp"
 #include <cstring>
 #include <arpa/inet.h>
 
@@ -86,7 +86,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t &size
 	unsigned char nsize[2] = {0,};
 	intf.Receive(nsize, sizeof(nsize));
 	printLog(int(nsize[0]), " ", int(nsize[1]));
-	size = ntohs(nsize[1] + static_cast<unsigned short>(nsize[0]) << 8);
+	size = ntohs(nsize[1] + (static_cast<unsigned short>(nsize[0]) << 8));
 	size_t nrOfPackets = (size / DATA_CHUNK) + (size % DATA_CHUNK == 0 ? 0:1);
 	printLog("Size of expected message is ", size);
 	if (nullptr == buffer)	
@@ -98,7 +98,6 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t &size
 	for (size_t i = 0; i < nrOfPackets; ++i)	
 	{
 		printLog("Receiving packet nr ", i);
-		unsigned char buff[25] = {0,};
 		if (i + 1 < nrOfPackets)
 		{
 			printLog("Expecting data chunk of size ", DATA_CHUNK);
