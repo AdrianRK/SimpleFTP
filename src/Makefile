@@ -9,7 +9,7 @@ LIBDIR:=../lib
 LDFLAGS:=-L$(LIBDIR) 
 OBJECTS:=$(SOURCES:.cpp=.o)
 CC:=g++
-EXECUTABLE:=server
+EXECUTABLE:=server.out
 LIBRARIES:= -pthread
 
 all: clean MAKEDIR $(SOURCES) $(EXECUTABLE) 

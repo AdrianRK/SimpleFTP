@@ -9,7 +9,7 @@ LIBDIR:=../lib
 LDFLAGS:=-L$(LIBDIR) 
 OBJECTS:=$(SOURCES:.cpp=.o)
 CC:=g++
-EXECUTABLE:= tester
+EXECUTABLE:= tester.out
 LIBRARIES:= -pthread
 
 all: clean MAKEDIR $(SOURCES) $(EXECUTABLE) 

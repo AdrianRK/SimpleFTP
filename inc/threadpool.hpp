@@ -20,15 +20,11 @@
 #define __THREAD_POOL_HEADER__
 #include <thread>
 #include <queue>
-#include <iostream>
 #include <condition_variable>
 #include <list>
 #include <atomic>
-#include <unistd.h>
 
-
-
-template <typename Job>
+template <typename Job, size_t NT = 0>
 class ThreadPool
 {
 public:
@@ -44,8 +40,8 @@ private:
 	std::condition_variable_any mSignal;
 };
 
-template <typename Job>
-ThreadPool<Job>::ThreadPool(): mQuit(false) 
+template <typename Job, size_t NT>
+ThreadPool<Job, NT>::ThreadPool(): mQuit(false) 
 {
 	auto lamda = [&]
 	{
@@ -64,14 +60,19 @@ ThreadPool<Job>::ThreadPool(): mQuit(false)
 			local();	
 		}
 	};
-	for (int i = 0; i < 5; i++)
+	size_t lnumberOfThreads = (NT == 0 ? std::thread::hardware_concurrency() : NT);
+	if (0 == lnumberOfThreads)
+	{
+		lnumberOfThreads = 5;
+	}
+	for (int i = 0; i < lnumberOfThreads; i++)
 	{
 		mListOfThreads.push_back(std::thread(lamda));
 	}
 }
 
-template <typename Job>
-ThreadPool<Job>::~ThreadPool()
+template <typename Job, size_t NT>
+ThreadPool<Job, NT>::~ThreadPool()
 {
 	mQuit = true;
 	mSignal.notify_all();
@@ -84,8 +85,8 @@ ThreadPool<Job>::~ThreadPool()
 	}
 }
 
-template <typename Job>
-void ThreadPool<Job>::postJob(const Job& fobj)
+template <typename Job, size_t NT>
+void ThreadPool<Job, NT>::postJob(const Job& fobj)
 {
 	std::unique_lock<std::mutex> lk (mMtx);
 	mQueue.push(fobj);
