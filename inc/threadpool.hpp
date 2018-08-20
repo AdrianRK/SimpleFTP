@@ -65,7 +65,7 @@ ThreadPool<Job, NT>::ThreadPool(): mQuit(false)
 	{
 		lnumberOfThreads = 5;
 	}
-	for (int i = 0; i < lnumberOfThreads; i++)
+	for (size_t i = 0; i < lnumberOfThreads; i++)
 	{
 		mListOfThreads.push_back(std::thread(lamda));
 	}
