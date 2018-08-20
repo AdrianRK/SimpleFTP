@@ -20,24 +20,39 @@
 #include "../inc/logging.hpp"
 #include "../inc/socket.hpp"
 #include <fstream>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 void SendFile(Socket &s, const std::string&fileName)
 {
-	std::ifstream is;
-	printLog(fileName);
-	is.open (fileName.c_str(), std::ios::binary);
-	// get length of file:
-	is.seekg (0, std::ios::end);
-	size_t length = is.tellg();
-	is.seekg (0, std::ios::beg);
-	printLog(length);
-	// allocate memory:
-	unsigned char *buffer = new unsigned char [length];
-	is.read(reinterpret_cast<char*>(buffer),length);
-	is.close();
-	transferFile(s, buffer, sizeof(unsigned char)*length);
-	delete [] buffer;
+	unsigned char *addr;
+	int fd;
+	struct stat sb;
+	fd = open(fileName.c_str(), O_RDONLY);
+	if (-1 == fd)
+	{
+		printLog("Unable to read file");
+		return;
+	}
+	if (fstat(fd, &sb) == -1)
+	{
+		printLog("Unable to stat file");
+		close(fd);
+		return;
+	}
+	printLog(sb.st_size);
+	addr = reinterpret_cast<unsigned char*>(mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+	if (addr == MAP_FAILED)
+	{
+		printLog("Unable to map file");	
+		close(fd);
+		return;
+	}
+	transferFile(s, addr, sb.st_size);
+	close(fd);
+	munmap(addr, sb.st_size);
 }
 
 void ReceiveFile(Socket &s, const std::string&fileName)
