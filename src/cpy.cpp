@@ -26,27 +26,17 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <string>
 
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  main
- *  Description:  
- * =====================================================================================
- */
-int main ( int argc, char *argv[] )
+int copyFiles (const std::string &file1, const std::string &file2)
 {
-	if (argc < 2)
-	{
-		std::cerr<< "incorrect usage" << std::endl;
-		return 1;
-	}
 	int fd_org = 0, fd_dest = 0;
 
-	fd_org  = open(argv[1], O_RDONLY);
+	fd_org  = open(file1.c_str(), O_RDONLY);
 	if (-1 == fd_org)
 	{
 		int err = errno;
-		std::cerr << "unable to open files " << argv[1] << " " << strerror(err) << std::endl;
+		std::cerr << "unable to open files " << file1 << " " << strerror(err) << std::endl;
 		return 2;
 	}
 
@@ -59,12 +49,12 @@ int main ( int argc, char *argv[] )
 		return 3;
 	}
 
-	fd_dest = open(argv[2], O_RDWR | O_CREAT, st.st_mode);
+	fd_dest = open(file2.c_str(), O_RDWR | O_CREAT, st.st_mode);
 	
 	if (-1 == fd_dest)
 	{
 		int err = errno;
-		std::cerr << "unable to open files " << argv[2] << " " << strerror(err) << std::endl;
+		std::cerr << "unable to open files " << file2 << " " << strerror(err) << std::endl;
 		return 2;
 	}
 
@@ -104,5 +94,6 @@ int main ( int argc, char *argv[] )
 	
 	munmap(addr_org, st.st_size);
 
-	return EXIT_SUCCESS;
-}				/* ----------  end of function main  ---------- */
+	munmap(addr_dest, st.st_size);
+	return 0;
+}
