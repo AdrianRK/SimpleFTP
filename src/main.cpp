@@ -15,7 +15,7 @@
  *
  * =====================================================================================
  */
-
+#include "../inc/tools.hpp"
 #include "../inc/threadpool.hpp"
 #include "../inc/logging.hpp"
 #include "../inc/socket.hpp"
@@ -27,32 +27,8 @@
 
 void SendFile(Socket &s, const std::string&fileName)
 {
-	unsigned char *addr;
-	int fd;
-	struct stat sb;
-	fd = open(fileName.c_str(), O_RDONLY);
-	if (-1 == fd)
-	{
-		printLog("Unable to read file");
-		return;
-	}
-	if (fstat(fd, &sb) == -1)
-	{
-		printLog("Unable to stat file");
-		close(fd);
-		return;
-	}
-	printLog(sb.st_size);
-	addr = reinterpret_cast<unsigned char*>(mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-	if (addr == MAP_FAILED)
-	{
-		printLog("Unable to map file");	
-		close(fd);
-		return;
-	}
-	transferFile(s, addr, sb.st_size);
-	close(fd);
-	munmap(addr, sb.st_size);
+	CMapedMem mem (loadFileFromDisk(fileName));
+	transferFile(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
 }
 
 void ReceiveFile(Socket &s, const std::string&fileName)
@@ -61,19 +37,10 @@ void ReceiveFile(Socket &s, const std::string&fileName)
 	size_t len;
 	buffer = receiveFile(s, buffer, len);
 	printLog("Received buffer of size", len);
-	std::ofstream fs;
-	fs.open(fileName.c_str(), std::ios::binary);	
-	if (nullptr != buffer)	
-	{	
-		printLog("Writing buffer of size ", len);
-		fs.write(reinterpret_cast<char*>(buffer), len * sizeof(unsigned char));
-		fs.flush();
-	}
-	fs.close();
-	printLog("Received length ", len);
-	if(buffer != nullptr)
+	if (nullptr != buffer)
 	{
-		delete [] buffer;
+		saveFileToDisk(reinterpret_cast<void*>(buffer),len,fileName);
+		delete [] buffer;	
 	}
 }
 

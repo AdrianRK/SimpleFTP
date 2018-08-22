@@ -16,6 +16,7 @@
  * =====================================================================================
  */
 
+#include "../inc/tools.hpp"
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -25,19 +26,41 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <string.h>
-#include <string>
+#include <cstring>
 
-int copyFiles (const std::string &file1, const std::string &file2)
+CMapedMem::~CMapedMem()
 {
-	int fd_org = 0, fd_dest = 0;
+	if (nullptr != mData)	
+	{
+		munmap(mData, mLength);
+		mData = nullptr;
+	}
+}
 
-	fd_org  = open(file1.c_str(), O_RDONLY);
+CMapedMem::CMapedMem(CMapedMem&&obj)
+{
+	mData = obj.mData;
+	obj.mData = nullptr;
+	mLength = obj.mLength;
+	mMode = obj.mMode;
+}
+
+CMapedMem::CMapedMem(void *data, size_t length, mode_t mode): mData(data), mLength(length), mMode(mode)
+{
+}
+
+CMapedMem loadFileFromDisk(const std::string&file)
+{
+	CMapedMem mem(nullptr, 0);
+	
+	int fd_org = 0;
+
+	fd_org  = open(file.c_str(), O_RDONLY);
 	if (-1 == fd_org)
 	{
 		int err = errno;
-		std::cerr << "unable to open files " << file1 << " " << strerror(err) << std::endl;
-		return 2;
+		std::cerr << "unable to open files " << file << " " << strerror(err) << std::endl;
+		return mem;
 	}
 
 	struct stat st;
@@ -46,54 +69,85 @@ int copyFiles (const std::string &file1, const std::string &file2)
 	{
 		int err = errno;
 		std::cerr << "unable to stat input file " << strerror(err) << std::endl;
-		return 3;
+		return mem;
 	}
-
-	fd_dest = open(file2.c_str(), O_RDWR | O_CREAT, st.st_mode);
 	
-	if (-1 == fd_dest)
-	{
-		int err = errno;
-		std::cerr << "unable to open files " << file2 << " " << strerror(err) << std::endl;
-		return 2;
-	}
+	unsigned char *addr_org = nullptr;
 
-	char *addr_dest = nullptr, *addr_org = nullptr;
-
-	addr_org = reinterpret_cast<char*>(mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd_org, 0));
+	addr_org = reinterpret_cast<unsigned char*>(mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd_org, 0));
 	if (MAP_FAILED == addr_org)
 	{
 		int err = errno;
 		std::cerr << "unable to mmap file in memory " << strerror(err) << std::endl;
-		return 4;
+		return mem;
 	}
 
-	close(fd_org);	
+	close(fd_org);
 
-	ftruncate(fd_dest, st.st_size);
+	mem.mData = addr_org;
+	mem.mLength = st.st_size;
+	mem.mMode = st.st_mode;
+	
+	return mem;
+}
 
-	addr_dest = reinterpret_cast<char*> (mmap(NULL, st.st_size, PROT_WRITE, MAP_SHARED, fd_dest, 0));
+int copyFiles (const std::string &file1, const std::string &file2)
+{
+	CMapedMem mem(loadFileFromDisk(file1));
+	
+	saveFileToDisk(mem, file2);
+
+	return 0;
+}
+
+int saveFileToDisk(void* data, size_t length, const std::string &file, const mode_t & mode)
+{
+	if (nullptr == data || 0 == file.size())	
+	{
+		return 0;
+	}
+
+	int fd_dest = 0;
+
+	fd_dest = open(file.c_str(), O_RDWR | O_CREAT, mode);
+	
+	if (-1 == fd_dest)
+	{
+		int err = errno;
+		std::cerr << "unable to open files " << file << " " << strerror(err) << std::endl;
+		return 1;
+	}
+	char *addr_dest = nullptr;
+	ftruncate(fd_dest, length);
+
+	addr_dest = reinterpret_cast<char*> (mmap(NULL, length, PROT_WRITE, MAP_SHARED, fd_dest, 0));
 	
 	if (MAP_FAILED == addr_dest)
 	{
 		int err = errno;
 		std::cerr << "unable to mmap file in memory " << strerror(err) << std::endl;
-		return 4;
+		return 3;
 	}
 	
-	memcpy(addr_dest, addr_org, st.st_size);	
+	memcpy(addr_dest, data, length);	
 	
-	if (-1 == msync(addr_dest, st.st_size, MS_SYNC))
+	if (-1 == msync(addr_dest, length, MS_SYNC))
 	{
 		int err = errno;
 		std::cerr << "unable to sync the mem to file " << strerror(err) << std::endl;
-		return 5;
+		return 4;
 	}
 
 	close(fd_dest);
-	
-	munmap(addr_org, st.st_size);
 
-	munmap(addr_dest, st.st_size);
-	return 0;
+	munmap(addr_dest, length);
+
+	return 0;	
 }
+
+
+int saveFileToDisk(const CMapedMem & mem, const std::string &file)
+{
+	return saveFileToDisk(mem.getBuffer(), mem.getLength(), file, mem.getMode());
+}
+
