@@ -36,10 +36,29 @@ CConfig& CConfig::getInstance()
 
 std::string rtrim(const std::string &str, char c)
 {
-	for(std::string::riterator it = str.rbegin(); it != str.rend(); ++it)
+	int it = 0;
+	for(it = str.size(); it > 0; --it)
+	{
+		if (str[it-1] != c)
+		{
+			break;
+		}
+	}
+	return str.substr(0, it);
+}
+
+std::string ltrim(const std::string &str, char c)
+{
+	size_t nr = 0;
+	for(auto it : str)
 	{
 		if (it != c)
+		{
+			break;
+		}
+		nr++;
 	}
+	return str.substr(nr, str.size());
 }
 
 void CConfig::loadConfigFile()
@@ -60,16 +79,13 @@ void CConfig::loadConfigFile()
 			{
 				continue;
 			}
-			size_t pos2 = line.find("#", pos1+1);
+			size_t pos2 = line.find("#", pos1);
 			if (pos2 == std::string::npos)
 			{
 				pos2 = line.size();
 			}
-			printLog(pos1);
-			key			= ((line.substr(0, pos1)).ltrim()).rtrim();
-			printLog(key);
-			value		= ((line.substr(pos1 + 1, line.size())).ltrim()).rtrim();
-			printLog(value);
+			key			= rtrim(ltrim(line.substr(0, pos1), ' '), ' ');
+			value		= rtrim(ltrim(line.substr(pos1 + 1, pos2 - pos1 - 1), ' '), ' ');
 			mParameters.insert(std::pair<std::string, std::string>(key,value));
 		}
 	}
