@@ -22,19 +22,14 @@
 #include <arpa/inet.h>
 
 const static size_t DATA_CHUNK = 2048;
+
 void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 {
 	if (nullptr != buffer && size != 0)
 	{
-		printLog("Sending buffer of size ", size);
-		unsigned char nsize[2] = {0,};
-		unsigned short shsize = size;
-		nsize[0] = htons(shsize) >> 8;
-		nsize[1] = htons(shsize);
-		intf.Send(nsize, sizeof(nsize));
-		printLog(int(nsize[0]), " ", int(nsize[1]));	
 		size_t nrOfPackets = size / DATA_CHUNK + (size % DATA_CHUNK == 0 ? 0:1);
-		size_t ret = 0;
+		printLog("Number of packets is ", nrOfPackets);
+		int ret = 0;
 		unsigned char rep = 0;
 		for (size_t i = 0; i < nrOfPackets; ++i)	
 		{
@@ -42,8 +37,9 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 			unsigned char buff[25] = {0,};
 			if (i + 1 < nrOfPackets)
 			{
+				printLog("Sending data packet of size ",DATA_CHUNK);
 				ret = intf.Send(buffer + (i * DATA_CHUNK), DATA_CHUNK);
-				if (ret != DATA_CHUNK)
+				if (ret != int(DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
 					rep = 'n';
@@ -52,9 +48,10 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 				}
 			}
 			else
-			{
+			{	
+				printLog("Sending data packet of size ",size % DATA_CHUNK);
 				ret = intf.Send(buffer + (i * DATA_CHUNK), size % DATA_CHUNK);
-				if (ret != size % DATA_CHUNK)
+				if (ret != int(size % DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
 					rep = 'n';
@@ -77,24 +74,20 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 	}
 }
 
-unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t &size)
+unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 {
-	printLog("Receiving files");
-	size = 0;
+	printLog("Receiving files of size ", size);
 	size_t ret = 0;
 	unsigned char rep = 0;
-	unsigned char nsize[2] = {0,};
-	intf.Receive(nsize, sizeof(nsize));
-	printLog(int(nsize[0]), " ", int(nsize[1]));
-	size = ntohs(nsize[1] + (static_cast<unsigned short>(nsize[0]) << 8));
-	size_t nrOfPackets = (size / DATA_CHUNK) + (size % DATA_CHUNK == 0 ? 0:1);
-	printLog("Size of expected message is ", size);
+	
 	if (nullptr == buffer)	
 	{
+		printLog("buffer is null");
 		buffer = new unsigned char [size+1];
 		memset(buffer, 0, sizeof(unsigned char) * (size+1));
 	}
-	printLog("Expected nr of packets ", nrOfPackets);
+	size_t nrOfPackets = (size / DATA_CHUNK) + (size % DATA_CHUNK == 0 ? 0:1);
+	printLog("Expected nr of packets ", size, " ", nrOfPackets, " ", (size / DATA_CHUNK), " ", (size % DATA_CHUNK == 0 ? 0:1));
 	for (size_t i = 0; i < nrOfPackets; ++i)	
 	{
 		printLog("Receiving packet nr ", i);
@@ -104,7 +97,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t &size
 			ret = intf.Receive(buffer + (i * DATA_CHUNK), DATA_CHUNK);
 			if (ret != DATA_CHUNK)
 			{
-				printLog("Error sending data chunk nr ", i);
+				printLog("Error receiving data chunk nr ", i);
 				rep = 'n';
 				intf.Send(&rep,1);
 				break;
@@ -116,7 +109,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t &size
 			ret = intf.Receive(buffer + (i * DATA_CHUNK), size % DATA_CHUNK);
 			if (ret != size % DATA_CHUNK)
 			{
-				printLog("Error sending data chunk nr ", i);
+				printLog("Error receiving data chunk nr ", i);
 				rep = 'n';
 				intf.Send(&rep,1);
 				break;

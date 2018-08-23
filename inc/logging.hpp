@@ -36,7 +36,7 @@ void log (const T& obj, const agcs&... arg)
 
 #ifdef D_DEBUG
 
-#define printLog(...) log("fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
+#define printLog(...) log("Fille [", __FILE__, "] fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
 #else
 #define printLog(...) 
 #endif

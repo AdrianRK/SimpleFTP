@@ -76,7 +76,8 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 	int ret = send(fdsocket, reinterpret_cast<const void*>(buffer), size, 0);
 	if (ret == -1)
 	{
-		printLog("Error sending");
+		int err = errno;
+		printLog("Error sending ", strerror(err));
 		return 0;
 	}
 	if (ret != int(size))
@@ -96,7 +97,8 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 	int ret = recv(fdsocket, reinterpret_cast<void*>(buffer), max_length, 0);
 	if (ret == -1)
 	{
-		printLog("Error sending");
+		int err = errno;
+		printLog("Error receiving ", strerror(err));
 		return 0;
 	}
 	return ret;
@@ -131,18 +133,20 @@ Socket::Socket(const std::string &ip, const std::string &port):fdsocket(-1)
 	hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
 
 	if ((status = getaddrinfo(ip.c_str(), port.c_str(), &hints, &servinfo)) != 0) 
-	{
-    	printLog("getaddrinfo error:", gai_strerror(status));
+	{	
+		int err = errno;
+    	printLog("getaddrinfo error:", gai_strerror(status)," ", strerror(err));
 	    return;
 	}
 				
 	int	s = socket(servinfo->ai_family, servinfo->ai_socktype | SOCK_CLOEXEC, servinfo->ai_protocol);
 	if (-1 == s)
 	{
-		printLog(strerror(errno));
+		int err = errno;
+		printLog(strerror(err));
 		return;
 	}	
-	printLog("Socket returned ", s);
+	//printLog("Socket returned ", s);
 	fdsocket = s;
 	printLog(*this);
 }
@@ -164,7 +168,7 @@ std::ostream & operator << (std::ostream &st, const Socket &s)
 Socket startServer(const std::string &ip, const std::string &port)
 {
 	Socket s(ip, port);
-	printLog(s);
+	//printLog(s);
 	if (-1 == s.fdsocket)
 	{
 		printLog("Invalid socket");
@@ -173,18 +177,20 @@ Socket startServer(const std::string &ip, const std::string &port)
 	int ret = bind(s.fdsocket, s.servinfo->ai_addr, s.servinfo->ai_addrlen);		
 	if (-1 == ret)
 	{
-		printLog(strerror(errno));
+		int err = errno;
+		printLog(strerror(err));
 		return Socket(-1);
 	}
-	printLog("bind returned ", ret);
+	//printLog("bind returned ", ret);
 
 	ret = listen(s.fdsocket, 10);
 	if (-1 == ret)
 	{
-		printLog(strerror(errno));
+		int err = errno;
+		printLog(strerror(err));
 		return Socket(-1);
 	}
-	printLog("listen returned ", ret);
+	//printLog("listen returned ", ret);
 
 	s.mType = Socket::SERVER;
 	printLog(s);
@@ -203,7 +209,8 @@ Socket ConnectToServer(const std::string &ip, const std::string &port)
 
 	if (-1 == ret)
 	{
-		printLog(strerror(errno));
+		int err = errno;
+		printLog(strerror(err));
 		return -1;
 	}
 	printLog(s);
@@ -222,10 +229,11 @@ Socket getNewClientConnection(const Socket &s)
 	int new_fd = accept(s.fdsocket, (struct sockaddr *)&their_addr, &addr_size);
 	if (-1 == new_fd)
 	{
-		printLog(strerror(errno));
+		int err = errno;
+		printLog(strerror(err));
 		return -1;
 	}
-	printLog("accept returned ", new_fd);	
+	//printLog("accept returned ", new_fd);	
 	
 	return Socket(new_fd, Socket::CLIENT);
 }

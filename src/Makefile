@@ -16,16 +16,20 @@ all: clean MAKEDIR $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(addprefix $(OBJDIR)/, $(OBJECTS)) -o $(BINDIR)/$@ $(LIBRARIES)
+	cp $(BINDIR)/$@ ../../server
+	cp $(BINDIR)/$@ ../../client
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
 
 clean:
-	rm -rf $(BINDIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/, $(OBJECTS)) 
+	rm -rf $(BINDIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/, $(OBJECTS)) $(BINDIR) $(OBJDIR)
 
 MAKEDIR:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(BINDIR)
 	mkdir -p $(LIBDIR)
+	mkdir -p ../../server
+	mkdir -p ../../client
 
 

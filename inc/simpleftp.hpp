@@ -28,6 +28,6 @@ public:
 };
 
 void transferFile(interface & intf, const unsigned char*buffer, size_t size);
-unsigned char* receiveFile(interface &intf, unsigned char* buffer, size_t &max_len);
+unsigned char* receiveFile(interface &intf, unsigned char* buffer, size_t max_len);
 
 #endif ///SIMPLE_FILE_TRANSFER_PROTOCOL_HEADER

@@ -20,11 +20,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <cstring>
 
@@ -47,6 +45,23 @@ CMapedMem::CMapedMem(CMapedMem&&obj)
 
 CMapedMem::CMapedMem(void *data, size_t length, mode_t mode): mData(data), mLength(length), mMode(mode)
 {
+}
+
+CMapedFile::CMapedFile(CMapedFile&&obj): CMapedMem(std::move(obj)) {}
+
+
+CMapedFile::CMapedFile(void * data, size_t length): CMapedMem(data, length) {}
+
+CMapedFile::~CMapedFile()
+{
+	if (nullptr != mData)
+	{
+		if (-1 == msync(mData, mLength, MS_SYNC))
+		{
+			int err = errno;
+			std::cerr << "unable to sync the mem to file " << strerror(err) << std::endl;
+		}
+	}
 }
 
 CMapedMem loadFileFromDisk(const std::string&file)
@@ -151,3 +166,31 @@ int saveFileToDisk(const CMapedMem & mem, const std::string &file)
 	return saveFileToDisk(mem.getBuffer(), mem.getLength(), file, mem.getMode());
 }
 
+CMapedFile mapNewFile(const std::string&file, size_t size, mode_t mode)
+{
+	CMapedFile mem (nullptr, 0);
+	int fd_dest = open(file.c_str(), O_RDWR | O_CREAT, mode);
+	
+	if (-1 == fd_dest)
+	{
+		int err = errno;
+		std::cerr << "unable to open files " << file << " " << strerror(err) << std::endl;
+		return mem;
+	}
+	char *addr_dest = nullptr;
+	ftruncate(fd_dest, size);
+
+	addr_dest = reinterpret_cast<char*> (mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd_dest, 0));
+	
+	if (MAP_FAILED == addr_dest)
+	{
+		int err = errno;
+		std::cerr << "unable to mmap file in memory " << strerror(err) << std::endl;
+		return mem;
+	}
+
+	mem.mData = addr_dest;
+	mem.mLength = size;
+	mem.mMode = mode;
+	return mem;
+}
