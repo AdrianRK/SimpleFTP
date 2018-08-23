@@ -19,6 +19,7 @@
 #include "../inc/threadpool.hpp"
 #include "../inc/logging.hpp"
 #include "../inc/socket.hpp"
+#include "../inc/config.hpp"
 #include <fstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -46,7 +47,6 @@ void ReceiveFile(Socket &s, const std::string&fileName)
 {
 	unsigned char * buffer = nullptr;
 	int32_t len;
-
 	unsigned char nsize[4] = {0,};
 	s.Receive(nsize, sizeof(nsize));
 	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
@@ -135,7 +135,7 @@ private:
 
 int main(int argc, char **argv)
 {
-
+	printLog(CConfig::getInstance().getParameter("FTPLocation"));
 	if (argc < 2)
 	{
 		return 1;

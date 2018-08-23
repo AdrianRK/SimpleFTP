@@ -17,6 +17,7 @@
  */
 #include <iostream>
 #include "../inc/threadpool.hpp"
+#include "../inc/config.hpp"
 #include <unistd.h>
 
 class job
