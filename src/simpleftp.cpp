@@ -29,35 +29,55 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 	{
 		const size_t DATA_CHUNK = intf.getBufferSize();
 		size_t nrOfPackets = size / DATA_CHUNK + (size % DATA_CHUNK == 0 ? 0:1);
+		size_t retryCount = 5;
 		printLog("Number of packets is ", nrOfPackets);
 		int ret = 0;
 		unsigned char rep = 0;
-		for (size_t i = 0; i < nrOfPackets; ++i)	
+		for (size_t i = 0; i < nrOfPackets;)	
 		{
 			printLog("Sending packet nr ", i);
 			unsigned char buff[25] = {0,};
+			retryCount = 5;
 			if (i + 1 < nrOfPackets)
 			{
 				printLog("Sending data packet of size ",DATA_CHUNK);
 				ret = intf.Send(buffer + (i * DATA_CHUNK), DATA_CHUNK);
+				printLog("Sent data chunk of size ", ret);
 				if (ret != int(DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
-					rep = 'n';
-					intf.Send(&rep,1);
-					break;
+					if (retryCount--)
+					{
+						rep = 'n';
+						intf.Send(&rep,1);
+						break;
+					}
+				}
+				else
+				{
+					++i;
+					retryCount = 5;
 				}
 			}
 			else
 			{	
 				printLog("Sending data packet of size ",size % DATA_CHUNK);
 				ret = intf.Send(buffer + (i * DATA_CHUNK), size % DATA_CHUNK);
+				printLog("Sent data chunk of size ", ret);
 				if (ret != int(size % DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
-					rep = 'n';
-					intf.Send(&rep,1);
-					break;
+					if (retryCount--)	
+					{
+						rep = 'n';
+						intf.Send(&rep,1);
+						break;
+					}
+				}
+				else
+				{
+					++i;
+					retryCount = 5;
 				}
 			}
 			intf.Receive(buff, 24);
@@ -80,6 +100,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 	printLog("Receiving files of size ", size);
 	size_t ret = 0;
 	unsigned char rep = 0;
+	size_t retryCount = 5;
 	const size_t DATA_CHUNK = intf.getBufferSize();;
 	if (nullptr == buffer)	
 	{
@@ -89,26 +110,35 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 	}
 	size_t nrOfPackets = (size / DATA_CHUNK) + (size % DATA_CHUNK == 0 ? 0:1);
 	printLog("Expected nr of packets ", size, " ", nrOfPackets, " ", (size / DATA_CHUNK), " ", (size % DATA_CHUNK == 0 ? 0:1));
-	for (size_t i = 0; i < nrOfPackets; ++i)	
+	for (size_t i = 0; i < nrOfPackets;)	
 	{
 		printLog("Receiving packet nr ", i);
 		if (i + 1 < nrOfPackets)
 		{
 			printLog("Expecting data chunk of size ", DATA_CHUNK);
 			ret = intf.Receive(buffer + (i * DATA_CHUNK), DATA_CHUNK);
+			printLog("Received data chunk of size ", ret);
 			if (ret != DATA_CHUNK)
 			{
 				printLog("Error receiving data chunk nr ", i);
-				rep = 'n';
-				intf.Send(&rep,1);
-				break;
+				if (retryCount--)
+				{
+					rep = 'n';
+					intf.Send(&rep,1);
+					break;
+				}
 			}
-			printLog("Received data chunk of size ", ret);
+			else
+			{
+				retryCount = 5;
+				++i;
+			}
 		}
 		else
 		{
 			printLog("Expecting dada chunk of size ", size % DATA_CHUNK);
 			ret = intf.Receive(buffer + (i * DATA_CHUNK), size % DATA_CHUNK);
+			printLog("Received data chunk of size ", ret);			
 			if (ret != size % DATA_CHUNK)
 			{
 				printLog("Error receiving data chunk nr ", i);
@@ -116,7 +146,11 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 				intf.Send(&rep,1);
 				break;
 			}
-			printLog("Received data chunk of size ", ret);			
+			else
+			{
+				retryCount = 5;
+				++i;
+			}
 		}
 		printLog("Received data chunk of size ", ret);
 		rep = 'k';

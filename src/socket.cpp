@@ -32,7 +32,7 @@ Socket::~Socket()
 
 size_t Socket::getBufferSize() const
 {
-	return 4096;
+	return 2048;
 }
 
 bool Socket::isValid ()const
