@@ -52,6 +52,10 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 						intf.Send(&rep,1);
 						break;
 					}
+					else
+					{
+						continue;
+					}
 				}
 				else
 				{
@@ -72,6 +76,10 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 						rep = 'n';
 						intf.Send(&rep,1);
 						break;
+					}
+					else
+					{
+						continue;
 					}
 				}
 				else
@@ -127,6 +135,10 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 					intf.Send(&rep,1);
 					break;
 				}
+				else
+				{
+					continue;
+				}
 			}
 			else
 			{
@@ -142,9 +154,16 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 			if (ret != size % DATA_CHUNK)
 			{
 				printLog("Error receiving data chunk nr ", i);
-				rep = 'n';
-				intf.Send(&rep,1);
-				break;
+				if (retryCount--)
+				{
+					rep = 'n';
+					intf.Send(&rep,1);
+					break;
+				}
+				else
+				{
+					continue;
+				}
 			}
 			else
 			{
