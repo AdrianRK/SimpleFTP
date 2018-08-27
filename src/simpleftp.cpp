@@ -118,11 +118,6 @@ unsigned char * _receiveBuffer(interface &intf, unsigned char *buffer, size_t si
 					continue;
 				}
 			}
-			else
-			{
-				retryCount = 5;
-				++i;
-			}
 		}
 		else
 		{
@@ -143,15 +138,12 @@ unsigned char * _receiveBuffer(interface &intf, unsigned char *buffer, size_t si
 					continue;
 				}
 			}
-			else
-			{
-				retryCount = 5;
-				++i;
-			}
 		}
 		printLog("Received data chunk of size ", ret);
 		rep = 'k';
 		intf.Send(&rep, 1);
+		retryCount = 5;
+		++i;
 	}
 	return buffer;
 }

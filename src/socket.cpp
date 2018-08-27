@@ -80,7 +80,7 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 	int ret = 0;
 	do
 	{
-		ret = send(fdsocket, reinterpret_cast<const void*>(buffer + ret), size - ret, 0);
+		ret += send(fdsocket, reinterpret_cast<const void*>(buffer + ret), size - ret, 0);
 		if (ret == -1)
 		{
 			int err = errno;
@@ -106,7 +106,7 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 	int ret = 0;
 	do
 	{
-		ret = recv(fdsocket, reinterpret_cast<void*>(buffer + ret), max_length - ret, 0);
+		ret += recv(fdsocket, reinterpret_cast<void*>(buffer + ret), max_length - ret, 0);
 		if (ret == -1)
 		{
 			int err = errno;
