@@ -25,6 +25,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <cstring>
+#include <sstream>
+#include <dirent.h>
 
 CMapedMem::~CMapedMem()
 {
@@ -193,4 +195,40 @@ CMapedFile mapNewFile(const std::string&file, size_t size, mode_t mode)
 	mem.mLength = size;
 	mem.mMode = mode;
 	return mem;
+}
+
+
+size_t getFileSize(const std::string &fileName)
+{
+	int fd = open(fileName.c_str(),O_RDONLY);
+	struct stat st;
+	if (-1 == fstat(fd, &st))
+	{
+		int err = errno;
+		std::cerr << "unable to stat input file " << strerror(err) << std::endl;
+		return 0;
+	}
+	return st.st_size;
+}
+
+std::string getListOfFiles(const std::string& fileLocation)
+{
+	std::stringstream ss;
+	DIR *d;
+  	struct dirent *dir;
+ 	d = opendir(fileLocation.c_str());
+  	if (d) 
+	{
+    	while ((dir = readdir(d)) != NULL) 
+		{
+			std::string str = dir->d_name;
+			if ((str != ".") && (str != ".."))
+			{
+				size_t fileSize = getFileSize(fileLocation + str);
+      			ss << "File name is: " << str << " of size " << fileSize << "\n";
+			}
+    	}
+    	closedir(d);
+  	}
+	return ss.str();
 }

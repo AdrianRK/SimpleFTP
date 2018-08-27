@@ -70,7 +70,8 @@ CMapedMem loadFileFromDisk(const std::string&file);
 int copyFiles (const std::string &file1, const std::string &file2);
 int saveFileToDisk(void* data, size_t length, const std::string &file, const mode_t & mode = 0);
 int saveFileToDisk(const CMapedMem & mem, const std::string &file);
-
+size_t getFileSize(const std::string &fileName);
+std::string getListOfFiles(const std::string& fileLocation);
 
 
 #endif // SIMPLE_FTP_TOOLS_HEADER

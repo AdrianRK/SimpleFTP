@@ -24,6 +24,7 @@ class interface
 public:
 	virtual size_t Send(const unsigned char *buffer, size_t size) = 0;
 	virtual size_t Receive(unsigned char *buffer, size_t size) = 0;
+	virtual size_t getBufferSize() const = 0;
 	virtual ~interface() {}
 };
 

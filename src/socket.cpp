@@ -29,7 +29,11 @@ Socket::~Socket()
 { 
 	fdclose();
 }
-	
+
+size_t Socket::getBufferSize() const
+{
+	return 4096;
+}
 
 bool Socket::isValid ()const
 {

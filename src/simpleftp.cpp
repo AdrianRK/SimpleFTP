@@ -21,12 +21,13 @@
 #include <cstring>
 #include <arpa/inet.h>
 
-const static size_t DATA_CHUNK = 2048;
+
 
 void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 {
 	if (nullptr != buffer && size != 0)
 	{
+		const size_t DATA_CHUNK = intf.getBufferSize();
 		size_t nrOfPackets = size / DATA_CHUNK + (size % DATA_CHUNK == 0 ? 0:1);
 		printLog("Number of packets is ", nrOfPackets);
 		int ret = 0;
@@ -79,7 +80,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 	printLog("Receiving files of size ", size);
 	size_t ret = 0;
 	unsigned char rep = 0;
-	
+	const size_t DATA_CHUNK = intf.getBufferSize();;
 	if (nullptr == buffer)	
 	{
 		printLog("buffer is null");

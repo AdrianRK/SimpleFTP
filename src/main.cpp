@@ -21,6 +21,7 @@
 #include "../inc/config.hpp"
 #include "../inc/ui.hpp"
 #include "../inc/protocol.hpp"
+#include "../inc/tools.hpp"
 #include <fstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -78,14 +79,35 @@ private:
 class getFileList: public CCommands
 {
 public:
-	virtual void operator()() {std::cout << "Get file list\n";}
+	getFileList(Socket& s): mSk(s) {}
+	virtual void operator()() 
+	{
+		std::cout << "Get file list\n";
+		std::string list;
+		ProtocolClient(mSk, 'l', "", list);
+		std::cout << "Printing File list:\n";
+		std::cout << list << "\n";
+	}
+private:
+	Socket &mSk;
+};
+
+class printLocalFileList: public CCommands
+{
+public:
+	virtual void operator()() 
+	{
+		std::cout << "Printing local file list\n";
+		std::string list = getListOfFiles(CConfig::getInstance().getParameter("FTPLocation"));
+		std::cout << "Printing File list:\n";
+		std::cout << list << "\n";
+	}
 };
 
 int main(int argc, char **argv)
 {
-	//printLog(CConfig::getInstance().getParameter("FTPLocation"));
-	
-	
+	printLog(CConfig::getInstance().getParameter("FTPLocation"));
+		
 	if (argc < 2)
 	{
 		return 1;
@@ -108,7 +130,7 @@ int main(int argc, char **argv)
 		{
 			while(1)
 			{
-				printLog("Get next client");	
+				printLog("Get next client");
 				Socket s = getNewClientConnection(server);
 				printLog("New client connection on", s);
 				processJob job(std::move(s));
@@ -129,14 +151,15 @@ int main(int argc, char **argv)
 		
 		Socket s = ConnectToServer(argv[2], argv[3]);
 		printLog(s);
-		//s.Send(reinterpret_cast<unsigned char*>(argv[4]), strlen(argv[4]));
-		//SendFile(s,argv[4]);
+		
 		CUserInterface::commandInput cmlst;
-		cmlst['1'] = std::pair<std::string, CCommands*>("1. Send file to server", new downloadFile(s));	
-		cmlst['2'] = std::pair<std::string, CCommands*>("2. Download file from server", new uploadFile(s));	
-		cmlst['3'] = std::pair<std::string, CCommands*>("3. Get list of files on server", new getFileList);
-
-		CUserInterface::getInstance().getUserKeyPress(cmlst, 'e');
+		cmlst['1'] = std::pair<std::string, CCommands*>("1. Download file from server", new downloadFile(s));	
+		cmlst['2'] = std::pair<std::string, CCommands*>("2. Upload file to server", new uploadFile(s));	
+		cmlst['3'] = std::pair<std::string, CCommands*>("3. Get list of files on server", new getFileList(s));
+		cmlst['4'] = std::pair<std::string, CCommands*>("4. Print local list of files", new printLocalFileList);
+		CUserInterface::getInstance().getUserKeyPress(cmlst, 'q');
+		const unsigned char c = 'q';
+		s.Send(&c,1);
 	}
 
 	return 0;

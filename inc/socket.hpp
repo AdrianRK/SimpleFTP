@@ -52,6 +52,8 @@ public:
 
 	size_t Receive(unsigned char *buffer, size_t max_length);
 
+	size_t getBufferSize() const;
+
 private:
 	typedef enum {SERVER, CLIENT} Socket_type_t;
 	
