@@ -24,7 +24,7 @@
 template <typename T>
 void log(std::ostream &stream, const T & obj)
 {
-	stream << obj << "\n";
+	stream << obj << std::endl;
 }
 
 template <typename T, typename... agcs>

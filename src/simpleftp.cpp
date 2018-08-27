@@ -103,6 +103,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 				intf.Send(&rep,1);
 				break;
 			}
+			printLog("Received data chunk of size ", ret);
 		}
 		else
 		{
@@ -114,7 +115,8 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 				rep = 'n';
 				intf.Send(&rep,1);
 				break;
-			}			
+			}
+			printLog("Received data chunk of size ", ret);			
 		}
 		printLog("Received data chunk of size ", ret);
 		rep = 'k';
