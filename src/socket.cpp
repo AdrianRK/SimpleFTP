@@ -77,17 +77,22 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 		printLog("Incorrect arguments");
 		return 0;	
 	}
-	int ret = send(fdsocket, reinterpret_cast<const void*>(buffer), size, 0);
-	if (ret == -1)
+	int ret = 0;
+	do
 	{
-		int err = errno;
-		printLog("Error sending ", strerror(err));
-		return 0;
+		ret = send(fdsocket, reinterpret_cast<const void*>(buffer + ret), size - ret, 0);
+		if (ret == -1)
+		{
+			int err = errno;
+			printLog("Error sending ", strerror(err));
+			return 0;
+		}
+		if (ret != int(size))
+		{
+			printLog("Did not send everyhting ", size, " ", ret);
+		}
 	}
-	if (ret != int(size))
-	{
-		printLog("Did not send everyhting ", size, " ", ret);
-	}
+	while(ret != int(size));
 	return ret;
 }
 
@@ -98,13 +103,22 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 		printLog("Incorrect arguments");
 		return 0;	
 	}
-	int ret = recv(fdsocket, reinterpret_cast<void*>(buffer), max_length, 0);
-	if (ret == -1)
+	int ret = 0;
+	do
 	{
-		int err = errno;
-		printLog("Error receiving ", strerror(err));
-		return 0;
+		ret = recv(fdsocket, reinterpret_cast<void*>(buffer + ret), max_length - ret, 0);
+		if (ret == -1)
+		{
+			int err = errno;
+			printLog("Error receiving ", strerror(err));
+			return 0;
+		}
+		if (ret != int(max_length))
+		{
+			printLog("Did not send everyhting ", max_length, " ", ret);
+		}
 	}
+	while(ret != int(max_length));
 	return ret;
 }
 

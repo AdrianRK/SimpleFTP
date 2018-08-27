@@ -23,7 +23,7 @@
 
 
 
-void transferFile(interface & intf, const unsigned char* buffer, size_t size)
+void _transferBuffer(interface & intf, const unsigned char* buffer, size_t size)
 {
 	if (nullptr != buffer && size != 0)
 	{
@@ -32,11 +32,10 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 		size_t retryCount = 5;
 		printLog("Number of packets is ", nrOfPackets);
 		int ret = 0;
-		unsigned char rep = 0;
 		for (size_t i = 0; i < nrOfPackets;)	
 		{
 			printLog("Sending packet nr ", i);
-			unsigned char buff[25] = {0,};
+			unsigned char buff = 0;
 			retryCount = 5;
 			if (i + 1 < nrOfPackets)
 			{
@@ -46,21 +45,6 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 				if (ret != int(DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
-					if (retryCount--)
-					{
-						rep = 'n';
-						intf.Send(&rep,1);
-						break;
-					}
-					else
-					{
-						continue;
-					}
-				}
-				else
-				{
-					++i;
-					retryCount = 5;
 				}
 			}
 			else
@@ -71,30 +55,24 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 				if (ret != int(size % DATA_CHUNK))
 				{
 					printLog("Error sending data chunk nr ", i);
-					if (retryCount--)	
+				}
+			}
+			intf.Receive(&buff, 1);
+			switch (buff)
+			{
+				case 'k':
+					++i;
+					retryCount = 5;
+				continue;
+				case 'n':
+					if (!retryCount--)	
 					{
-						rep = 'n';
-						intf.Send(&rep,1);
 						break;
 					}
 					else
 					{
 						continue;
-					}
-				}
-				else
-				{
-					++i;
-					retryCount = 5;
-				}
-			}
-			intf.Receive(buff, 24);
-			switch (buff[0])
-			{
-				case 'k':
-					continue;
-				case 'n':
-					break;
+					};
 				default:
 					break;
 			}
@@ -103,9 +81,9 @@ void transferFile(interface & intf, const unsigned char* buffer, size_t size)
 	}
 }
 
-unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
+unsigned char * _receiveBuffer(interface &intf, unsigned char *buffer, size_t size)
 {
-	printLog("Receiving files of size ", size);
+	printLog("Receiving buffer of size ", size);
 	size_t ret = 0;
 	unsigned char rep = 0;
 	size_t retryCount = 5;
@@ -129,7 +107,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 			if (ret != DATA_CHUNK)
 			{
 				printLog("Error receiving data chunk nr ", i);
-				if (retryCount--)
+				if (!retryCount--)
 				{
 					rep = 'n';
 					intf.Send(&rep,1);
@@ -154,7 +132,7 @@ unsigned char * receiveFile(interface &intf, unsigned char *buffer, size_t size)
 			if (ret != size % DATA_CHUNK)
 			{
 				printLog("Error receiving data chunk nr ", i);
-				if (retryCount--)
+				if (!retryCount--)
 				{
 					rep = 'n';
 					intf.Send(&rep,1);

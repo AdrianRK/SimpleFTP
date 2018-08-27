@@ -30,7 +30,7 @@ void SendBuffer(Socket &s, const unsigned char * buffer, size_t size)
 	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
 	
 	s.Send(nsize, sizeof(nsize));
-	transferFile(s, buffer, size);
+	_transferBuffer(s, buffer, size);
 }
 
 unsigned char* ReceiveBuffer(Socket &s, size_t &size)
@@ -42,7 +42,7 @@ unsigned char* ReceiveBuffer(Socket &s, size_t &size)
 	len = ntohl(nsize[3] + (static_cast<unsigned long>(nsize[2]) << 8) + (static_cast<unsigned long>(nsize[1]) << 16) + (static_cast<unsigned long>(nsize[0]) << 24));
 	printLog("Size of expected message is ", len);
 
-	unsigned char * buffer = receiveFile(s, nullptr, len);
+	unsigned char * buffer = _receiveBuffer(s, nullptr, len);
 
 	size = len;
 	return buffer;
@@ -68,7 +68,7 @@ void ReceiveFile(Socket &s, const std::string&fileName)
 	printLog("Size of expected message is ", len);
 
 	CMapedFile mem (mapNewFile(CConfig::getInstance().getParameter("FTPLocation") + fileName, len));
-	buffer = receiveFile(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
+	buffer = _receiveBuffer(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
 	printLog("Received buffer of size ", len);
 	if (nullptr == mem.getBuffer())
 	{
@@ -92,18 +92,25 @@ void ProtocolServer(Socket& s)
 		{
 			case 'd':
 			{
-				unsigned char buffer[256] = {0,};
-				size_t ret = s.Receive(buffer, 255);
-				printLog("Receive filename ", ret);
-				SendFile(s, reinterpret_cast<char*>(buffer));
+				size_t size = 0;
+				unsigned char *buffer = ReceiveBuffer(s, size);
+				printLog("Receive filename ", size);
+				if (nullptr != buffer)
+				{
+					SendFile(s, reinterpret_cast<char*>(buffer));
+					delete [] buffer;
+				}
 				break;
 			}
 			case 'u':
 			{
-				unsigned char buffer[256] = {0,};
-				size_t ret = s.Receive(buffer, 255);
-				printLog("Receive filename ", ret);
-				ReceiveFile(s, reinterpret_cast<char*>(buffer));
+				size_t size = 0;
+				unsigned char *buffer = ReceiveBuffer(s, size);
+				printLog("Receive filename ", size);
+				if (nullptr != buffer)
+				{
+					ReceiveFile(s, reinterpret_cast<char*>(buffer));
+				}
 				break;
 			}
 			case 'l':
@@ -128,12 +135,12 @@ void ProtocolClient(Socket& s, char command, const std::string & fileName, std::
 	{
 		case 'd':
 			s.Send(reinterpret_cast<unsigned char*>(&command), 1);
-			s.Send(reinterpret_cast<const unsigned char*>(fileName.c_str()), fileName.size());
+			SendBuffer(s,reinterpret_cast<const unsigned char*>(fileName.c_str()), fileName.size());
 			ReceiveFile(s, fileName);
 			break;
 		case 'u':
 			s.Send(reinterpret_cast<unsigned char*>(&command), 1);
-			s.Send(reinterpret_cast<const unsigned char*>(fileName.c_str()), fileName.size());
+			SendBuffer(s,reinterpret_cast<const unsigned char*>(fileName.c_str()), fileName.size());
 			SendFile(s, fileName);
 			break;
 		case 'l':
