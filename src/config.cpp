@@ -64,6 +64,10 @@ std::string ltrim(const std::string &str, char c)
 void CConfig::loadConfigFile()
 {
 	std::ifstream fd(CConfig::configFile);
+	if(fd.bad())
+	{
+		return;
+	}
 
 	while(!fd.eof())
 	{

@@ -15,57 +15,16 @@
  *
  * =====================================================================================
  */
-#include "../inc/tools.hpp"
 #include "../inc/threadpool.hpp"
 #include "../inc/logging.hpp"
 #include "../inc/socket.hpp"
 #include "../inc/config.hpp"
+#include "../inc/ui.hpp"
+#include "../inc/protocol.hpp"
 #include <fstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-
-void SendFile(Socket &s, const std::string&fileName)
-{
-	CMapedMem mem (loadFileFromDisk(fileName));
-
-	printLog("Sending buffer of size ", mem.getLength());
-	unsigned char nsize[4] = {0,};
-	nsize[0] = htonl(int32_t(mem.getLength())) >> 24;
-	nsize[1] = htonl(int32_t(mem.getLength())) >> 16;
-	nsize[2] = htonl(int32_t(mem.getLength())) >> 8;
-	nsize[3] = htonl(int32_t(mem.getLength()));
-	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
-	
-	s.Send(nsize, sizeof(nsize));
-	
-	transferFile(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
-}
-
-void ReceiveFile(Socket &s, const std::string&fileName)
-{
-	unsigned char * buffer = nullptr;
-	int32_t len;
-	unsigned char nsize[4] = {0,};
-	s.Receive(nsize, sizeof(nsize));
-	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
-	len = ntohl(nsize[3] + (static_cast<unsigned long>(nsize[2]) << 8) + (static_cast<unsigned long>(nsize[1]) << 16) + (static_cast<unsigned long>(nsize[0]) << 24));
-	printLog("Size of expected message is ", len);
-
-	CMapedFile mem (mapNewFile(fileName, len));
-	buffer = receiveFile(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
-	printLog("Received buffer of size ", len);
-	if (nullptr == mem.getBuffer())
-	{
-		if (nullptr != buffer)
-		{
-			saveFileToDisk(reinterpret_cast<void*>(buffer),len,fileName);
-			delete [] buffer;	
-		}
-	}
-}
-
 
 class processJob
 {
@@ -77,65 +36,56 @@ public:
 	void operator()() 
 	{
 		printLog(mSk);
-		//std::this_thread::sleep_for(std::chrono::seconds(5));
-		/*unsigned char buffer[256] = {0,};
-		size_t len = 0;
-		while(1)
-		{
-			memset(buffer, 0 , 256 * sizeof(unsigned char));
-			len = mSk.Receive(buffer, 255);
-			printLog("Received len ", len);
-			if (0 == len)
-			{
-				break;
-			}
-			printLog(reinterpret_cast<char*>(buffer));
-			if (std::string (reinterpret_cast<char*>(buffer)) == "exit\n")
-			{
-				printLog("Client requested exit");
-				break;
-			}
-			len = mSk.Send(buffer, len);
-			if (0 == len)
-			{
-				break;
-			}printLog("Sent len ", len);
-		}*/
-		/*unsigned char command = 0;
-		bool fexit = false;
-		do
-		{	
-			s.Receive(&command, 1);
-			switch (command)
-			{
-				case 'u':
-					break;
-				case 'd':
-					break;
-				case 'l':
-					break;
-				case 'e':
-					break;
-				default:
-					fexit = false;
-					break;
-			}
-		}while(exit);*/
-		unsigned char buffer[256] = {0,};
-		size_t ret = mSk.Receive(buffer, 255);
-		if (0 != ret)
-		{
-			ReceiveFile(mSk, reinterpret_cast<char*>(buffer));
-		}
+		ProtocolServer(mSk);
 	}
 private:
 	Socket mSk;
 };
 
+class downloadFile: public CCommands
+{
+public:
+	downloadFile(Socket& s): mSk(s) {}
+
+	virtual void operator()() 
+	{
+		std::cout << "Download file\nEnter File Name:";
+		std::string fileName;
+		std::cin >> fileName;
+		std::string list;
+		ProtocolClient(mSk, 'd', fileName, list);	
+	}
+private:
+	Socket &mSk;
+};
+
+class uploadFile: public CCommands
+{
+public:
+	uploadFile(Socket& s): mSk(s) {}
+	virtual void operator()() 
+	{
+		std::cout << "Upload file\nEnter File Name:";
+		std::string fileName;
+		std::cin >> fileName;
+		std::string list;
+		ProtocolClient(mSk, 'u', fileName, list);
+	}
+private:
+	Socket &mSk;
+};
+
+class getFileList: public CCommands
+{
+public:
+	virtual void operator()() {std::cout << "Get file list\n";}
+};
 
 int main(int argc, char **argv)
 {
-	printLog(CConfig::getInstance().getParameter("FTPLocation"));
+	//printLog(CConfig::getInstance().getParameter("FTPLocation"));
+	
+	
 	if (argc < 2)
 	{
 		return 1;
@@ -170,7 +120,7 @@ int main(int argc, char **argv)
 	if (std::string(argv[1]) == "Client" || std::string(argv[1]) == "client")
 	{
 		printLog("Starting up a client");
-		if (argc < 5)
+		if (argc < 4)
 		{
 			printLog("Invalid number of parameters");
 			return 1;
@@ -179,8 +129,14 @@ int main(int argc, char **argv)
 		
 		Socket s = ConnectToServer(argv[2], argv[3]);
 		printLog(s);
-		s.Send(reinterpret_cast<unsigned char*>(argv[4]), strlen(argv[4]));
-		SendFile(s,argv[4]);		
+		//s.Send(reinterpret_cast<unsigned char*>(argv[4]), strlen(argv[4]));
+		//SendFile(s,argv[4]);
+		CUserInterface::commandInput cmlst;
+		cmlst['1'] = std::pair<std::string, CCommands*>("1. Send file to server", new downloadFile(s));	
+		cmlst['2'] = std::pair<std::string, CCommands*>("2. Download file from server", new uploadFile(s));	
+		cmlst['3'] = std::pair<std::string, CCommands*>("3. Get list of files on server", new getFileList);
+
+		CUserInterface::getInstance().getUserKeyPress(cmlst, 'e');
 	}
 
 	return 0;

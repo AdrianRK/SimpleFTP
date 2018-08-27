@@ -17,28 +17,35 @@
  */
 
 
-#ifndef __LOGGING_HEADER__
-#define __LOGGING_HEADER__
+#ifndef SIMPLE_FTP_LOGGING_HEADER_
+#define SIMPLE_FTP_LOGGING_HEADER_
 #include <iostream>
-
+#include <fstream>
 template <typename T>
-void log(const T & obj)
+void log(std::ostream &stream, const T & obj)
 {
-	std::cout << obj << "\n";
+	stream << obj << "\n";
 }
 
 template <typename T, typename... agcs>
-void log (const T& obj, const agcs&... arg)
+void log (std::ostream &stream, const T& obj, const agcs&... arg)
 {
-	std::cout << obj;
-	log(arg...);
+	stream << obj;
+	log(stream, arg...);
 }
 
 #ifdef D_DEBUG
 
-#define printLog(...) log("Fille [", __FILE__, "] fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
+static std::ofstream logger("logfile.txt", std::ios::app);
+
+#define printLog(...) log(logger,"Message::Fille [", __FILE__, "] fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
+#define printError(...) log(logger,"Error::Fille [", __FILE__, "] fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
+#define printWarning(...) log(logger,"Warning::Fille [", __FILE__, "] fuction[", __FUNCTION__, "] line[", __LINE__, "] message:[", __VA_ARGS__, "]")
+
 #else
 #define printLog(...) 
+#define printWarning(...)
+#define printError(...)
 #endif
 
-#endif // __LOGGING_HEADER__
+#endif // SIMPLE_FTP_LOGGING_HEADER_

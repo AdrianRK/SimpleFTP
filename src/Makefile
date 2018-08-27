@@ -2,7 +2,13 @@
 #                                     Make file LargeInt 	                                   #
 ####################################################################################################
 CFLAGS:=-c -Wall --std=c++11 -DD_DEBUG
-SOURCES:= cpy.cpp config.cpp socket.cpp simpleftp.cpp main.cpp
+SOURCES:= cpy.cpp \
+		config.cpp \
+		socket.cpp \
+		simpleftp.cpp \
+		ui.cpp \
+		protocol.cpp \
+		main.cpp
 OBJDIR:=../obj
 BINDIR:=../bin
 LIBDIR:=../lib
