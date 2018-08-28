@@ -78,6 +78,7 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 		return 0;	
 	}
 	int ret = 0;
+	int retry = 5;
 	do
 	{
 		ret += send(fdsocket, reinterpret_cast<const void*>(buffer + ret), size - ret, 0);
@@ -90,6 +91,10 @@ size_t Socket::Send(const unsigned char *buffer, size_t size)
 		if (ret != int(size))
 		{
 			printLog("Did not send everyhting ", size, " ", ret);
+			if (!retry --)
+			{
+				break;
+			}
 		}
 	}
 	while(ret != int(size));
@@ -104,6 +109,7 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 		return 0;	
 	}
 	int ret = 0;
+	int retry = 5;
 	do
 	{
 		ret += recv(fdsocket, reinterpret_cast<void*>(buffer + ret), max_length - ret, 0);
@@ -116,6 +122,10 @@ size_t Socket::Receive(unsigned char *buffer, size_t max_length)
 		if (ret != int(max_length))
 		{
 			printLog("Did not send everyhting ", max_length, " ", ret);
+			if (! retry --)
+			{
+				break;
+			}
 		}
 	}
 	while(ret != int(max_length));
