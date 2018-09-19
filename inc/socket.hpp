@@ -37,7 +37,7 @@ public:
 	Socket(Socket&&s);
 	~Socket();
 
-	Socket operator = (const Socket&s) = delete;
+	const Socket& operator = (const Socket&s) = delete;
 
 	bool isValid ()const;
 	

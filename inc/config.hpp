@@ -31,7 +31,7 @@ private:
 	CConfig();
 	
 	CConfig(const CConfig&) = delete;
-	CConfig& operator=(const CConfig&) = delete;
+	const CConfig& operator=(const CConfig&) = delete;
 	void loadConfigFile();
 
 	const static std::string configFile;

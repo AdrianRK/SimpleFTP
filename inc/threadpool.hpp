@@ -33,6 +33,9 @@ public:
 	void postJob(const Job& fobj);
 
 private:
+
+	ThreadPool(const ThreadPool &) = delete;
+	const ThreadPool& operator=(const ThreadPool&) = delete;
 	std::list <std::thread> mListOfThreads;
 	std::queue <Job>  mQueue;
 	std::mutex mMtx;
