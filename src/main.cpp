@@ -15,13 +15,13 @@
  *
  * =====================================================================================
  */
-#include "../inc/threadpool.hpp"
-#include "../inc/logging.hpp"
-#include "../inc/socket.hpp"
-#include "../inc/config.hpp"
-#include "../inc/ui.hpp"
-#include "../inc/protocol.hpp"
-#include "../inc/tools.hpp"
+#include "threadpool.hpp"
+#include "logging.hpp"
+#include "socket.hpp"
+#include "config.hpp"
+#include "ui.hpp"
+#include "protocol.hpp"
+#include "tools.hpp"
 #include <fstream>
 #include <sys/mman.h>
 #include <sys/stat.h>

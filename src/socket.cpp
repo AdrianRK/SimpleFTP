@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "../inc/socket.hpp"
-#include "../inc/logging.hpp"
+#include "socket.hpp"
+#include "logging.hpp"
 
 Socket::Socket(Socket&&s): fdsocket(s.fdsocket), mType(s.mType), servinfo(s.servinfo)
 {

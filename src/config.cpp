@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "../inc/config.hpp"
-#include "../inc/logging.hpp"
+#include "config.hpp"
+#include "logging.hpp"
 #include <fstream>
 #include <cstdlib>
 

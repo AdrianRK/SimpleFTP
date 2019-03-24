@@ -1,7 +1,8 @@
 ####################################################################################################
 #                                     Make file LargeInt 	                                   #
 ####################################################################################################
-CFLAGS:=-c -Wall --std=c++11 -DD_DEBUG
+INC:=-I../inc/
+CFLAGS:=-c -Wall $(INC) --std=c++11 -DD_DEBUG
 SOURCES:= cpy.cpp \
 		config.cpp \
 		socket.cpp \
@@ -9,6 +10,7 @@ SOURCES:= cpy.cpp \
 		ui.cpp \
 		protocol.cpp \
 		main.cpp
+
 OBJDIR:=../obj
 BINDIR:=../bin
 LIBDIR:=../lib

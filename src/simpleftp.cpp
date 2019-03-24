@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "../inc/simpleftp.hpp"
-#include "../inc/logging.hpp"
+#include "simpleftp.hpp"
+#include "logging.hpp"
 #include <cstring>
 #include <arpa/inet.h>
 

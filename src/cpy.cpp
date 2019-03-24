@@ -16,7 +16,7 @@
  * =====================================================================================
  */
 
-#include "../inc/tools.hpp"
+#include "tools.hpp"
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <stdlib.h>

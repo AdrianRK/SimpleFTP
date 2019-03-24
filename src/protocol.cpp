@@ -15,12 +15,12 @@
  *
  * =====================================================================================
  */
-#include "../inc/config.hpp"
-#include "../inc/tools.hpp"
-#include "../inc/logging.hpp"
-#include "../inc/socket.hpp"
+#include "config.hpp"
+#include "tools.hpp"
+#include "logging.hpp"
+#include "socket.hpp"
 
-void SendBuffer(Socket &s, const unsigned char * buffer, size_t size)
+void SendBuffer(interface &s, const unsigned char * buffer, size_t size)
 {
 	unsigned char nsize[4] = {0,};
 	nsize[0] = htonl(int32_t(size)) >> 24;
@@ -33,7 +33,7 @@ void SendBuffer(Socket &s, const unsigned char * buffer, size_t size)
 	_transferBuffer(s, buffer, size);
 }
 
-unsigned char* ReceiveBuffer(Socket &s, size_t &size)
+unsigned char* ReceiveBuffer(interface &s, size_t &size)
 {
 	int32_t len;
 	unsigned char nsize[4] = {0,};
@@ -48,7 +48,7 @@ unsigned char* ReceiveBuffer(Socket &s, size_t &size)
 	return buffer;
 }
 
-void SendFile(Socket &s, const std::string&fileName)
+void SendFile(interface &s, const std::string&fileName)
 {
 	CMapedMem mem (loadFileFromDisk(CConfig::getInstance().getStringParameter("FTPLocation") + fileName));
 
@@ -57,7 +57,7 @@ void SendFile(Socket &s, const std::string&fileName)
 	SendBuffer(s, reinterpret_cast<const unsigned char*>(mem.getBuffer()), mem.getLength());
 }
 
-void ReceiveFile(Socket &s, const std::string&fileName)
+void ReceiveFile(interface &s, const std::string&fileName)
 {
 	unsigned char * buffer = nullptr;
 	int32_t len;
@@ -80,7 +80,7 @@ void ReceiveFile(Socket &s, const std::string&fileName)
 	}
 }
 
-void ProtocolServer(Socket& s)
+void ProtocolServer(interface& s)
 {
 	bool quitFlag = false;
 
@@ -129,7 +129,7 @@ void ProtocolServer(Socket& s)
 	}
 }
 
-void ProtocolClient(Socket& s, char command, const std::string & fileName, std::string &fileList)
+void ProtocolClient(interface& s, char command, const std::string & fileName, std::string &fileList)
 {
 	switch (command)
 	{

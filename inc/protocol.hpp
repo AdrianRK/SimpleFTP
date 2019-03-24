@@ -19,9 +19,9 @@
 #ifndef SIMPLE_FTP_PROTOCOL_HEADER
 #define SIMPLE_FTP_PROTOCOL_HEADER
 
-void SendFile(Socket &s, const std::string&fileName);
-void ReceiveFile(Socket &s, const std::string&fileName);
-void ProtocolServer(Socket& s);
-void ProtocolClient(Socket& s, char command, const std::string & fileName, std::string &fileList);
+void SendFile(interface &s, const std::string&fileName);
+void ReceiveFile(interface &s, const std::string&fileName);
+void ProtocolServer(interface& s);
+void ProtocolClient(interface& s, char command, const std::string & fileName, std::string &fileList);
 
 #endif //SIMPLE_FTP_PROTOCOL_HEADER
