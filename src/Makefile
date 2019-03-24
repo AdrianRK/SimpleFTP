@@ -15,10 +15,10 @@ LIBDIR:=../lib
 LDFLAGS:=-L$(LIBDIR) 
 OBJECTS:=$(SOURCES:.cpp=.o)
 CC:=g++
-EXECUTABLE:=server.out
+EXECUTABLE:=simpleftp
 LIBRARIES:= -pthread
 
-all: clean MAKEDIR $(SOURCES) $(EXECUTABLE) 
+all: cln MAKEDIR $(SOURCES) $(EXECUTABLE) 
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(addprefix $(OBJDIR)/, $(OBJECTS)) -o $(BINDIR)/$@ $(LIBRARIES)
@@ -28,6 +28,9 @@ $(EXECUTABLE): $(OBJECTS)
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
 
+cln:
+	rm -rf $(BINDIR)/$(EXECUTABLE)
+	
 clean:
 	rm -rf $(BINDIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/, $(OBJECTS)) $(BINDIR) $(OBJDIR)
 

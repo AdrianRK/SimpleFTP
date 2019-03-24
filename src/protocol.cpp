@@ -50,7 +50,7 @@ unsigned char* ReceiveBuffer(Socket &s, size_t &size)
 
 void SendFile(Socket &s, const std::string&fileName)
 {
-	CMapedMem mem (loadFileFromDisk(CConfig::getInstance().getParameter("FTPLocation") + fileName));
+	CMapedMem mem (loadFileFromDisk(CConfig::getInstance().getStringParameter("FTPLocation") + fileName));
 
 	printLog("Sending buffer of size ", mem.getLength());
 	
@@ -67,7 +67,7 @@ void ReceiveFile(Socket &s, const std::string&fileName)
 	len = ntohl(nsize[3] + (static_cast<unsigned long>(nsize[2]) << 8) + (static_cast<unsigned long>(nsize[1]) << 16) + (static_cast<unsigned long>(nsize[0]) << 24));
 	printLog("Size of expected message is ", len);
 
-	CMapedFile mem (mapNewFile(CConfig::getInstance().getParameter("FTPLocation") + fileName, len));
+	CMapedFile mem (mapNewFile(CConfig::getInstance().getStringParameter("FTPLocation") + fileName, len));
 	buffer = _receiveBuffer(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
 	printLog("Received buffer of size ", len);
 	if (nullptr == mem.getBuffer())
@@ -115,7 +115,7 @@ void ProtocolServer(Socket& s)
 			}
 			case 'l':
 			{
-				std::string str = getListOfFiles(CConfig::getInstance().getParameter("FTPLocation"));
+				std::string str = getListOfFiles(CConfig::getInstance().getStringParameter("FTPLocation"));
 				SendBuffer(s, reinterpret_cast<const unsigned char*>(str.c_str()), str.size());								
 
 				printLog("Sending directory list");

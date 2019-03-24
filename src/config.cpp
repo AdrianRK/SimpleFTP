@@ -19,13 +19,19 @@
 #include "../inc/config.hpp"
 #include "../inc/logging.hpp"
 #include <fstream>
+#include <cstdlib>
 
 const std::string CConfig::configFile = "configFile.ini";
 const std::string CConfig::defaultftpFolderLocation = ".";
 
-std::string CConfig::getParameter(const std::string &st)
+std::string CConfig::getStringParameter(const std::string &st)
 {
 	return mParameters[st];
+}
+
+int32_t CConfig::getIntParameter(const std::string & str)
+{
+	return std::strtol(getStringParameter(str).c_str(), nullptr, 10);
 }
 
 CConfig& CConfig::getInstance()

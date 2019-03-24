@@ -24,7 +24,8 @@
 class CConfig
 {
 public:
-	std::string getParameter(const std::string & str);
+	std::string getStringParameter(const std::string & str);
+	int32_t getIntParameter(const std::string & str);
 	static CConfig&	getInstance();
 
 private: 

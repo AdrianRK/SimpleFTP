@@ -98,7 +98,7 @@ public:
 	virtual void operator()() 
 	{
 		std::cout << "Printing local file list\n";
-		std::string list = getListOfFiles(CConfig::getInstance().getParameter("FTPLocation"));
+		std::string list = getListOfFiles(CConfig::getInstance().getStringParameter("FTPLocation"));
 		std::cout << "Printing File list:\n";
 		std::cout << list << "\n";
 	}
@@ -106,25 +106,23 @@ public:
 
 int main(int argc, char **argv)
 {
-	printLog(CConfig::getInstance().getParameter("FTPLocation"));
-		
-	if (argc < 2)
-	{
-		return 1;
-	}
+	printLog(CConfig::getInstance().getStringParameter("FTPLocation"));
+	printLog(CConfig::getInstance().getStringParameter("FTPMode"));
+	printLog(CConfig::getInstance().getIntParameter("FTPPort"));
+	printLog(CConfig::getInstance().getStringParameter("FTPIP"));
 
-	if (std::string(argv[1]) == "Server" || std::string(argv[1]) == "server")
+	std::string applicationMode = CConfig::getInstance().getStringParameter("FTPMode");
+	std::string port = CConfig::getInstance().getStringParameter("FTPPort");
+	std::string ip = CConfig::getInstance().getStringParameter("FTPIP");
+
+	if (applicationMode == "Server" || applicationMode == "server")
 	{
 		printLog("Starting up a server");
-		if (argc < 4)
-		{
-			printLog("Invalid number of parameters");
-			return 1;
-		}
-		printLog("Starting server with IP ", argv[2], " and Port ", argv[3]);
+
+		printLog("Starting server with IP ", ip, " and Port ", port);
 	
 		ThreadPool<processJob> serverPool;
-		Socket server = startServer(argv[2], argv[3]);
+		Socket server = startServer(ip, port);
 		printLog(server);
 		if(server.isValid())
 		{
@@ -139,17 +137,13 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	if (std::string(argv[1]) == "Client" || std::string(argv[1]) == "client")
+	if (applicationMode == "Client" || applicationMode == "client")
 	{
 		printLog("Starting up a client");
-		if (argc < 4)
-		{
-			printLog("Invalid number of parameters");
-			return 1;
-		}
-		printLog("Starting server with IP ", argv[2], " and Port ", argv[3]);
+
+		printLog("Starting server with IP ", ip, " and Port ", port);
 		
-		Socket s = ConnectToServer(argv[2], argv[3]);
+		Socket s = ConnectToServer(ip, port);
 		printLog(s);
 		
 		CUserInterface::commandInput cmlst;
