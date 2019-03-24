@@ -28,6 +28,9 @@
 #include <sstream>
 #include <dirent.h>
 
+namespace simpleftp
+{
+
 CMapedMem::~CMapedMem()
 {
 	if (nullptr != mData)	
@@ -232,3 +235,4 @@ std::string getListOfFiles(const std::string& fileLocation)
   	}
 	return ss.str();
 }
+} // namespace simpleftp

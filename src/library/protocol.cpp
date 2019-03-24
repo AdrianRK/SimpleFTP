@@ -15,10 +15,14 @@
  *
  * =====================================================================================
  */
-#include "config.hpp"
+//#include "config.hpp"
 #include "tools.hpp"
-#include "logging.hpp"
-#include "socket.hpp"
+//#include "logging.hpp"
+#include "simpleftp.hpp"
+#include <arpa/inet.h>
+
+namespace simpleftp
+{
 
 void SendBuffer(interface &s, const unsigned char * buffer, size_t size)
 {
@@ -27,7 +31,7 @@ void SendBuffer(interface &s, const unsigned char * buffer, size_t size)
 	nsize[1] = htonl(int32_t(size)) >> 16;
 	nsize[2] = htonl(int32_t(size)) >> 8;
 	nsize[3] = htonl(int32_t(size));
-	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
+	//printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
 	
 	s.Send(nsize, sizeof(nsize));
 	_transferBuffer(s, buffer, size);
@@ -38,9 +42,9 @@ unsigned char* ReceiveBuffer(interface &s, size_t &size)
 	int32_t len;
 	unsigned char nsize[4] = {0,};
 	s.Receive(nsize, sizeof(nsize));
-	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
+//	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
 	len = ntohl(nsize[3] + (static_cast<unsigned long>(nsize[2]) << 8) + (static_cast<unsigned long>(nsize[1]) << 16) + (static_cast<unsigned long>(nsize[0]) << 24));
-	printLog("Size of expected message is ", len);
+//	printLog("Size of expected message is ", len);
 
 	unsigned char * buffer = _receiveBuffer(s, nullptr, len);
 
@@ -50,9 +54,9 @@ unsigned char* ReceiveBuffer(interface &s, size_t &size)
 
 void SendFile(interface &s, const std::string&fileName)
 {
-	CMapedMem mem (loadFileFromDisk(CConfig::getInstance().getStringParameter("FTPLocation") + fileName));
+	CMapedMem mem (loadFileFromDisk(/*CConfig::getInstance().getStringParameter("FTPLocation") + */fileName));
 
-	printLog("Sending buffer of size ", mem.getLength());
+//	printLog("Sending buffer of size ", mem.getLength());
 	
 	SendBuffer(s, reinterpret_cast<const unsigned char*>(mem.getBuffer()), mem.getLength());
 }
@@ -63,13 +67,13 @@ void ReceiveFile(interface &s, const std::string&fileName)
 	int32_t len;
 	unsigned char nsize[4] = {0,};
 	s.Receive(nsize, sizeof(nsize));
-	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
+//	printLog(int(nsize[0]), " ", int(nsize[1]), " ", int(nsize[2]), " ", int(nsize[3]));
 	len = ntohl(nsize[3] + (static_cast<unsigned long>(nsize[2]) << 8) + (static_cast<unsigned long>(nsize[1]) << 16) + (static_cast<unsigned long>(nsize[0]) << 24));
-	printLog("Size of expected message is ", len);
+//	printLog("Size of expected message is ", len);
 
-	CMapedFile mem (mapNewFile(CConfig::getInstance().getStringParameter("FTPLocation") + fileName, len));
+	CMapedFile mem (mapNewFile(/*CConfig::getInstance().getStringParameter("FTPLocation") + */fileName, len));
 	buffer = _receiveBuffer(s, reinterpret_cast<unsigned char*>(mem.getBuffer()), mem.getLength());
-	printLog("Received buffer of size ", len);
+//	printLog("Received buffer of size ", len);
 	if (nullptr == mem.getBuffer())
 	{
 		if (nullptr != buffer)
@@ -80,7 +84,7 @@ void ReceiveFile(interface &s, const std::string&fileName)
 	}
 }
 
-void ProtocolServer(interface& s)
+void ProtocolServer(interface& s, std::string location)
 {
 	bool quitFlag = false;
 
@@ -94,7 +98,7 @@ void ProtocolServer(interface& s)
 			{
 				size_t size = 0;
 				unsigned char *buffer = ReceiveBuffer(s, size);
-				printLog("Receive filename ", size);
+//				printLog("Receive filename ", size);
 				if (nullptr != buffer)
 				{
 					SendFile(s, reinterpret_cast<char*>(buffer));
@@ -106,7 +110,7 @@ void ProtocolServer(interface& s)
 			{
 				size_t size = 0;
 				unsigned char *buffer = ReceiveBuffer(s, size);
-				printLog("Receive filename ", size);
+//				printLog("Receive filename ", size);
 				if (nullptr != buffer)
 				{
 					ReceiveFile(s, reinterpret_cast<char*>(buffer));
@@ -115,10 +119,11 @@ void ProtocolServer(interface& s)
 			}
 			case 'l':
 			{
-				std::string str = getListOfFiles(CConfig::getInstance().getStringParameter("FTPLocation"));
+				//std::string str = getListOfFiles(CConfig::getInstance().getStringParameter("FTPLocation"));
+				std::string str = location;
 				SendBuffer(s, reinterpret_cast<const unsigned char*>(str.c_str()), str.size());								
 
-				printLog("Sending directory list");
+//				printLog("Sending directory list");
 				break;
 			}
 			case 'q':
@@ -159,3 +164,4 @@ void ProtocolClient(interface& s, char command, const std::string & fileName, st
 			break;
 	}
 }
+} // namespace simpleftp
